@@ -1,5 +1,6 @@
 import { updateClassComponent, updateFragmentComponent, updateFunctionComponent, updateHostComponent, updateHostTextComponent } from "./ReactFiberReconciler";
 import { ClassComponent, Fragment, FunctionComponent, HostComponent, HostText } from "./ReactWorkTags";
+import { Placement } from "./utils";
 
 let wip = null // 当前正在工做的fiber
 let wipRoot = null // 根
@@ -9,6 +10,20 @@ export function scheduleUpdateOnFiber(fiber) {
     wip = fiber
     wipRoot = fiber
 }
+
+function workLoop(IdleDeadline) {
+    while (wip && IdleDeadline.timeRemaining() > 0) {
+        preformUnitOfWork()
+    }
+
+    if (!wip && wipRoot) {
+        commitRoot()
+    }
+
+    // requestIdleCallbsack(workLoop)
+}
+
+requestIdleCallback(workLoop)
 
 function preformUnitOfWork() {
     const { tag } = wip
@@ -51,4 +66,29 @@ function preformUnitOfWork() {
         }
         next = next.return
     }
+
+    wip = null
+}
+
+// 提交
+function commitRoot() {
+    commitWorker(wipRoot)
+    wipRoot = null
+}
+
+function commitWorker(fiber) {
+    if (!fiber) {
+        return
+    }
+    // 1 提交自己
+    const { flags, stateNode } = fiber
+    const parentNode = fiber.return.stateNode
+    if (flags & Placement && stateNode) {
+        parentNode.appendChild(stateNode)
+    }
+    // 2 提交子节点
+    commitWorker(fiber.child)
+    // 3 提交兄节点
+    commitWorker(fiber.sibling)
+
 }

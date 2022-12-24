@@ -22,3 +22,15 @@ export function isFn(fn) {
 export function isArray(val) {
     return Array.isArray(val)
 }
+
+export function updateNode(node, nextVal) {
+    Object.keys(nextVal).forEach(k => {
+        if (k === 'children') {
+            if (isStringNumber(nextVal[k])) {
+                node.textContent = nextVal[k]
+            }
+        } else {
+            node[k] = nextVal[k]
+        }
+    })
+}
