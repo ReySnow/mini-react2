@@ -15,9 +15,10 @@ export function createFiber(vnode, returnFiber) {
         // 第一个子fiber
         child: null,
         // 下一个兄弟节点
-        silbing: null,
+        sibling: null,
         // 父节点
         return: returnFiber,
+        // 组件要做什么事情
         flags: Placement,
         // 记录节点在当前层级下的位置
         index: null,
