@@ -1,7 +1,14 @@
-import { updateClassComponent, updateFragmentComponent, updateFunctionComponent, updateHostComponent, updateHostTextComponent } from "./ReactReconciler";
+import { updateClassComponent, updateFragmentComponent, updateFunctionComponent, updateHostComponent, updateHostTextComponent } from "./ReactFiberReconciler";
 import { ClassComponent, Fragment, FunctionComponent, HostComponent, HostText } from "./ReactWorkTags";
 
 let wip = null // 当前正在工做的fiber
+let wipRoot = null // 根
+
+// 初次渲染和更新
+export function scheduleUpdateOnFiber(fiber) {
+    wip = fiber
+    wipRoot = fiber
+}
 
 function preformUnitOfWork() {
     const { tag } = wip
