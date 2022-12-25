@@ -82,7 +82,7 @@ function commitWorker(fiber) {
     }
     // 1 提交自己
     const { flags, stateNode } = fiber
-    const parentNode = fiber.return.stateNode
+    const parentNode = getParentNode(fiber.return)
     if (flags & Placement && stateNode) {
         parentNode.appendChild(stateNode)
     }
@@ -90,5 +90,15 @@ function commitWorker(fiber) {
     commitWorker(fiber.child)
     // 3 提交兄节点
     commitWorker(fiber.sibling)
+}
 
+// 获取父dom节点
+function getParentNode(wip) {
+    let temp = wip
+    while (temp) {
+        if (temp.stateNode) {
+            return temp.stateNode
+        }
+        temp = temp.return
+    }
 }

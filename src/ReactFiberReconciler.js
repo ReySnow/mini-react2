@@ -12,7 +12,12 @@ export function updateHostComponent(wip) {
     reconsileChildren(wip, wip.props.children)
 }
 
-export function updateFunctionComponent() { }
+// 函数组件 函数返回值就是其子节点
+export function updateFunctionComponent(wip) {
+    const { type, props } = wip
+    const children = type(props)
+    reconsileChildren(wip, children)
+}
 
 export function updateClassComponent() { }
 
