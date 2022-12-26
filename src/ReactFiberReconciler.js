@@ -9,24 +9,35 @@ export function updateHostComponent(wip) {
     updateNode(wip.stateNode, wip.props)
 
     // 处理子节点
-    reconsileChildren(wip, wip.props.children)
+    reconcileChildren(wip, wip.props.children)
 }
 
 // 函数组件 函数返回值就是其子节点
 export function updateFunctionComponent(wip) {
     const { type, props } = wip
     const children = type(props)
-    reconsileChildren(wip, children)
+    reconcileChildren(wip, children)
 }
 
-export function updateClassComponent() { }
+// 实例化class组件，调用render
+export function updateClassComponent(wip) {
+    const { type, props } = wip
+    const instance = new type(props)
+    const children = instance.render()
+    reconcileChildren(wip, children)
+}
 
-export function updateFragmentComponent() { }
+export function updateFragmentComponent(wip) {
+    console.log(wip);
+    reconcileChildren(wip, wip.props.children)
+}
 
-export function updateHostTextComponent() { }
+export function updateHostTextComponent(wip) {
+    wip.stateNode = document.createTextNode(wip.props.children)
+}
 
 // 协调
-function reconsileChildren(wip, children) {
+function reconcileChildren(wip, children) {
     if (isStringNumber(children)) {
         return
     }

@@ -19,6 +19,10 @@ export function isFn(fn) {
     return typeof fn === 'function'
 }
 
+export function isUndefined(s) {
+    return s === undefined
+}
+
 export function isArray(val) {
     return Array.isArray(val)
 }
