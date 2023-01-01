@@ -1,5 +1,6 @@
 import { updateClassComponent, updateFragmentComponent, updateFunctionComponent, updateHostComponent, updateHostTextComponent } from "./ReactFiberReconciler";
 import { ClassComponent, Fragment, FunctionComponent, HostComponent, HostText } from "./ReactWorkTags";
+import { scherduleCallback } from "./scheduler";
 import { Placement } from "./utils";
 
 let wip = null // 当前正在工做的fiber
@@ -9,10 +10,13 @@ let wipRoot = null // 根
 export function scheduleUpdateOnFiber(fiber) {
     wip = fiber
     wipRoot = fiber
+
+    scherduleCallback(workLoop)
 }
 
-function workLoop(IdleDeadline) {
-    while (wip && IdleDeadline.timeRemaining() > 0) {
+function workLoop() {
+    // while (wip && IdleDeadline.timeRemaining() > 0) {
+    while (wip) {
         preformUnitOfWork()
     }
 
@@ -23,7 +27,7 @@ function workLoop(IdleDeadline) {
     // requestIdleCallbsack(workLoop)
 }
 
-requestIdleCallback(workLoop)
+// requestIdleCallback(workLoop)
 
 function preformUnitOfWork() {
     const { tag } = wip
@@ -72,6 +76,7 @@ function preformUnitOfWork() {
 
 // 提交
 function commitRoot() {
+    console.log(wipRoot);
     commitWorker(wipRoot)
     wipRoot = null
 }
