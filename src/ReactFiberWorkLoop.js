@@ -1,7 +1,7 @@
 import { updateClassComponent, updateFragmentComponent, updateFunctionComponent, updateHostComponent, updateHostTextComponent } from "./ReactFiberReconciler";
 import { ClassComponent, Fragment, FunctionComponent, HostComponent, HostText } from "./ReactWorkTags";
 import { scherduleCallback } from "./scheduler";
-import { Placement } from "./utils";
+import { Placement, Update, updateNode } from "./utils";
 
 let wip = null // 当前正在工做的fiber
 let wipRoot = null // 根
@@ -90,6 +90,10 @@ function commitWorker(fiber) {
     const parentNode = getParentNode(fiber.return)
     if (flags & Placement && stateNode) {
         parentNode.appendChild(stateNode)
+    }
+    if (flags & Update && stateNode) {
+        // 更新属性
+        updateNode(stateNode, fiber.alternate.props, fiber.props)
     }
     // 2 提交子节点
     commitWorker(fiber.child)

@@ -1,12 +1,13 @@
+import { renderWithHooks } from "./hooks"
 import { createFiber } from "./ReactFiber"
-import { isArray, isStringNumber, updateNode } from "./utils"
+import { isArray, isStringNumber, Update, updateNode } from "./utils"
 
 // 原生标签
 export function updateHostComponent(wip) {
     if (!wip.stateNode) {
         wip.stateNode = document.createElement(wip.type)
     }
-    updateNode(wip.stateNode, wip.props)
+    updateNode(wip.stateNode, {}, wip.props)
 
     // 处理子节点
     reconcileChildren(wip, wip.props.children)
@@ -14,6 +15,8 @@ export function updateHostComponent(wip) {
 
 // 函数组件 函数返回值就是其子节点
 export function updateFunctionComponent(wip) {
+    renderWithHooks(wip)
+
     const { type, props } = wip
     const children = type(props)
     reconcileChildren(wip, children)
@@ -42,6 +45,8 @@ function reconcileChildren(wip, children) {
         return
     }
     const newChildren = isArray(children) ? children : [children]
+    // oldfiber 头节点
+    let oldfiber = wip.alternate?.child
     let previousNewFiber = null
     for (let i = 0; i < newChildren.length; i++) {
         const child = newChildren[i];
@@ -49,6 +54,18 @@ function reconcileChildren(wip, children) {
             continue
         }
         const newFiber = createFiber(child, wip)
+        if (sameNode(newFiber, oldfiber)) {
+            // 相同
+            Object.assign(newFiber, {
+                stateNode: oldfiber.stateNode,
+                alternate: oldfiber,
+                flags: Update,
+            })
+        }
+        // oldfiber移动到下一个兄弟节点
+        if (oldfiber) {
+            oldfiber = oldfiber.sibling
+        }
         if (previousNewFiber == null) {
             // 第一个子节点
             wip.child = newFiber
@@ -59,4 +76,9 @@ function reconcileChildren(wip, children) {
 
         previousNewFiber = newFiber
     }
+}
+
+// 复用条件
+function sameNode(a, b) {
+    return a && b && a.type === b.type && a.key === b.key
 }
