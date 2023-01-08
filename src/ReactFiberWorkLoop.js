@@ -95,6 +95,11 @@ function commitWorker(fiber) {
         // 更新属性
         updateNode(stateNode, fiber.alternate.props, fiber.props)
     }
+
+    if (fiber.deletions) {
+        // 存在需要删除的
+        commitDeletions(fiber.deletions, stateNode || parentNode)
+    }
     // 2 提交子节点
     commitWorker(fiber.child)
     // 3 提交兄节点
@@ -110,4 +115,21 @@ function getParentNode(wip) {
         }
         temp = temp.return
     }
+}
+
+// 删除子节点dom
+function commitDeletions(deletions, parentNode) {
+    for (let fiber of deletions) {
+        parentNode.removeChild(getStateNode(fiber))
+    }
+}
+
+// 不是每个fiber都有dom
+// 找有dom的子节点
+function getStateNode(fiber) {
+    let tmp = fiber
+    while (!tmp.stateNode) {
+        tmp = tmp.child
+    }
+    return tmp.stateNode
 }

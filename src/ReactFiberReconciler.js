@@ -54,13 +54,18 @@ function reconcileChildren(wip, children) {
             continue
         }
         const newFiber = createFiber(child, wip)
-        if (sameNode(newFiber, oldfiber)) {
+        let same = sameNode(newFiber, oldfiber)
+        if (same) {
             // 相同
             Object.assign(newFiber, {
                 stateNode: oldfiber.stateNode,
                 alternate: oldfiber,
                 flags: Update,
             })
+        }
+        // 删除节点
+        if (!same && oldfiber) {
+            deleteChild(wip, oldfiber)
         }
         // oldfiber移动到下一个兄弟节点
         if (oldfiber) {
@@ -75,6 +80,15 @@ function reconcileChildren(wip, children) {
         }
 
         previousNewFiber = newFiber
+    }
+}
+
+// 将要删除的节点保存到父节点上
+function deleteChild(returnFiber, child) {
+    if (returnFiber.deletions) {
+        returnFiber.deletions.push(child)
+    } else {
+        returnFiber.deletions = [child]
     }
 }
 
