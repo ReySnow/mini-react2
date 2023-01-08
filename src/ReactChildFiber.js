@@ -2,20 +2,21 @@ import { createFiber } from "./ReactFiber";
 import { isArray, isStringNumber, Update } from "./utils";
 
 // 协调
-export function reconcileChildren(wip, children) {
+export function reconcileChildren(returnFiber, children) {
     if (isStringNumber(children)) {
         return
     }
     const newChildren = isArray(children) ? children : [children]
     // oldfiber 头节点
-    let oldfiber = wip.alternate?.child
+    let oldfiber = returnFiber.alternate?.child
     let previousNewFiber = null
-    for (let i = 0; i < newChildren.length; i++) {
-        const child = newChildren[i];
+    let newIndex = 0
+    for (newIndex = 0; newIndex < newChildren.length; newIndex++) {
+        const child = newChildren[newIndex];
         if (child == null) {
             continue
         }
-        const newFiber = createFiber(child, wip)
+        const newFiber = createFiber(child, returnFiber)
         let same = sameNode(newFiber, oldfiber)
         if (same) {
             // 相同
@@ -27,7 +28,7 @@ export function reconcileChildren(wip, children) {
         }
         // 删除节点
         if (!same && oldfiber) {
-            deleteChild(wip, oldfiber)
+            deleteChild(returnFiber, oldfiber)
         }
         // oldfiber移动到下一个兄弟节点
         if (oldfiber) {
@@ -35,13 +36,19 @@ export function reconcileChildren(wip, children) {
         }
         if (previousNewFiber == null) {
             // 第一个子节点
-            wip.child = newFiber
+            returnFiber.child = newFiber
         } else {
             // 是上一个节点的兄弟节点
             previousNewFiber.sibling = newFiber
         }
 
         previousNewFiber = newFiber
+    }
+
+    // 新节点遍历完，但还有（多个）老节点，删除（多个）老节点
+    if (newIndex === newChildren.length) {
+        // 从剩下的老节点开始删除
+        deleteRemainingChildren(returnFiber, oldfiber)
     }
 }
 
@@ -51,6 +58,14 @@ function deleteChild(returnFiber, child) {
         returnFiber.deletions.push(child)
     } else {
         returnFiber.deletions = [child]
+    }
+}
+
+function deleteRemainingChildren(returnFiber, currentFirstChild) {
+    let childToDelte = currentFirstChild
+    while (childToDelte) {
+        deleteChild(returnFiber, childToDelte)
+        childToDelte = childToDelte.sibling// 下一个兄弟节点
     }
 }
 
