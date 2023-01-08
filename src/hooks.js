@@ -47,12 +47,28 @@ export function useReducer(reducer, initalState) {
         // 初次渲染
         hook.memorizedState = initalState
     }
-    const dispatch = () => {
-        // 根据上一次状态获取新的状态
-        hook.memorizedState = reducer(hook.memorizedState)
-        currentlyRenderingFiber.alternate = { ...currentlyRenderingFiber }
-        scheduleUpdateOnFiber(currentlyRenderingFiber)
-        console.log('dispatch');
-    }
+    // const dispatch = () => {
+    //     // 根据上一次状态获取新的状态
+    //     hook.memorizedState = reducer(hook.memorizedState)
+    //     currentlyRenderingFiber.alternate = { ...currentlyRenderingFiber }
+    //     scheduleUpdateOnFiber(currentlyRenderingFiber)
+    //     console.log('dispatch');
+    // }
+    // 保存 currentlyRenderingFiber 到上下文 
+    // 否则在调用dispatch的时候 currentlyRenderingFiber 不是当前组件的fiber
+    const dispatch = dispatchReducerAction.bind(null, currentlyRenderingFiber, hook, reducer)
     return [hook.memorizedState, dispatch]
+}
+
+export function useState(initalState) {
+    return useReducer(null, initalState)
+}
+
+function dispatchReducerAction(fiber, hook, reducer, action) {
+    // 根据上一次状态获取新的状态
+    hook.memorizedState = reducer ? reducer(hook.memorizedState) : action
+    fiber.alternate = { ...fiber }
+    fiber.sibling = null// ？ 不更新兄弟节点
+    scheduleUpdateOnFiber(fiber)
+    console.log('dispatch');
 }
