@@ -9,46 +9,64 @@ export function reconcileChildren(returnFiber, children) {
     const newChildren = isArray(children) ? children : [children]
     // oldfiber 头节点
     let oldfiber = returnFiber.alternate?.child
+    // 用于判断returnFiber是初次渲染还是更新
+    let shouldTrackSideEffects = !!returnFiber.alternate
     let previousNewFiber = null
     let newIndex = 0
-    for (newIndex = 0; newIndex < newChildren.length; newIndex++) {
-        const child = newChildren[newIndex];
-        if (child == null) {
-            continue
-        }
-        const newFiber = createFiber(child, returnFiber)
-        let same = sameNode(newFiber, oldfiber)
-        if (same) {
-            // 相同
-            Object.assign(newFiber, {
-                stateNode: oldfiber.stateNode,
-                alternate: oldfiber,
-                flags: Update,
-            })
-        }
-        // 删除节点
-        if (!same && oldfiber) {
-            deleteChild(returnFiber, oldfiber)
-        }
-        // oldfiber移动到下一个兄弟节点
-        if (oldfiber) {
-            oldfiber = oldfiber.sibling
-        }
-        if (previousNewFiber == null) {
-            // 第一个子节点
-            returnFiber.child = newFiber
-        } else {
-            // 是上一个节点的兄弟节点
-            previousNewFiber.sibling = newFiber
-        }
+    // 上一次dom节点插入的最远位置
+    let lastPlacedIndex = 0
+    // 初次渲染
+    if (!oldfiber) {
+        for (; newIndex < newChildren.length; newIndex++) {
+            const child = newChildren[newIndex];
+            if (child == null) {
+                continue
+            }
+            const newFiber = createFiber(child, returnFiber)
+            lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex, shouldTrackSideEffects)
+            // let same = sameNode(newFiber, oldfiber)
+            // if (same) {
+            //     // 相同
+            //     Object.assign(newFiber, {
+            //         stateNode: oldfiber.stateNode,
+            //         alternate: oldfiber,
+            //         flags: Update,
+            //     })
+            // }
+            // // 删除节点
+            // if (!same && oldfiber) {
+            //     deleteChild(returnFiber, oldfiber)
+            // }
+            // // oldfiber移动到下一个兄弟节点
+            // if (oldfiber) {
+            //     oldfiber = oldfiber.sibling
+            // }
+            if (previousNewFiber == null) {
+                // 第一个子节点
+                returnFiber.child = newFiber
+            } else {
+                // 是上一个节点的兄弟节点
+                previousNewFiber.sibling = newFiber
+            }
 
-        previousNewFiber = newFiber
+            previousNewFiber = newFiber
+        }
     }
 
     // 新节点遍历完，但还有（多个）老节点，删除（多个）老节点
     if (newIndex === newChildren.length) {
         // 从剩下的老节点开始删除
         deleteRemainingChildren(returnFiber, oldfiber)
+    }
+}
+
+// 初次渲染，记录下标
+// 更新的时候检查节点是否移动
+function placeChild(newFiber, lastPlacedIndex, newIndex, shouldTrackSideEffects) {
+    newFiber.index = newIndex
+    if (!shouldTrackSideEffects) {
+        // 初次渲染
+        return lastPlacedIndex
     }
 }
 
