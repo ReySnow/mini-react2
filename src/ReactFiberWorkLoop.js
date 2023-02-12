@@ -89,7 +89,9 @@ function commitWorker(fiber) {
     const { flags, stateNode } = fiber
     const parentNode = getParentNode(fiber.return)
     if (flags & Placement && stateNode) {
-        parentNode.appendChild(stateNode)
+        const before = getHostSibling(fiber.sibling)
+        insertOrAppendPlacementNode(stateNode, before, parentNode)
+        // parentNode.appendChild(stateNode)
     }
     if (flags & Update && stateNode) {
         // 更新属性
@@ -132,4 +134,24 @@ function getStateNode(fiber) {
         tmp = tmp.child
     }
     return tmp.stateNode
+}
+
+// 获取下一个的dom,以便在这个dom前插入
+function getHostSibling(sibling) {
+    while (sibling) {
+        // 有dom节点，且状态不是新增(新增的还没有插入页面中)
+        if (sibling.stateNode && !(sibling.flags & Placement)) {
+            return sibling.stateNode
+        }
+        sibling = sibling.sibling
+    }
+    return null
+}
+
+function insertOrAppendPlacementNode(stateNode, before, parentNode) {
+    if (before) {
+        parentNode.insertBefore(stateNode, before)
+    } else {
+        parentNode.appendChild(stateNode)
+    }
 }
